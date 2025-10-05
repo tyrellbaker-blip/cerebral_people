@@ -1,0 +1,409 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Enums
+// ───────────────────────────────────────────────────────────────────────────────
+
+enum Visibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+enum ContentStatus {
+  ACTIVE
+  HIDDEN
+  REMOVED
+}
+
+enum ReactionKind {
+  LIKE
+  SUPPORT
+  HELPFUL
+}
+
+enum RecommendationKind {
+  DOCTOR
+  FACILITY
+  EXERCISE
+  DIET
+  DEVICE
+}
+
+enum ReportStatus {
+  OPEN
+  TRIAGED
+  ACTIONED
+  DISMISSED
+}
+
+enum ModerationActionType {
+  HIDE
+  WARN
+  BAN
+  DELETE
+}
+
+enum SubjectType {
+  POST
+  COMMENT
+  USER
+  RECOMMENDATION
+  MESSAGE
+}
+
+enum NotificationType {
+  NEW_FOLLOW
+  NEW_COMMENT
+  NEW_REACTION
+  NEW_MESSAGE
+  MODERATION
+  SYSTEM
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Models
+// Notes:
+// - We store auth user id as UUID. For Supabase, this matches auth.users.id
+// - `@default(dbgenerated("gen_random_uuid()"))` needs pgcrypto: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+// - `updatedAt @updatedAt` automatically manages timestamps via Prisma
+// - Array columns use Postgres-native arrays via Prisma (e.g., String[])
+// ───────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String?    @unique @db.Text
+  emailVerified DateTime?
+  name          String?    @db.Text
+  image         String?    @db.Text
+  passkeyEnrolled Boolean  @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  profile       Profile?
+  posts         Post[]
+  comments      Comment[]
+  reactions     Reaction[]
+  follows       Follow[]   @relation("follows_follower")
+  followers     Follow[]   @relation("follows_followee")
+  recommendations Recommendation[]
+  recommendationReviews RecommendationReview[]
+  messageThreadsCreated MessageThread[] @relation("threads_created_by")
+  messages      Message[]
+  reports       Report[]   @relation("reports_reporter")
+  moderationActions ModerationAction[] @relation("moderation_actions_actor")
+  notifications Notification[]
+  auditLogs     AuditLog[] @relation("audit_logs_actor")
+
+  // NextAuth adapter fields
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Profile {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @unique @db.Uuid
+  displayName String?  @db.Text
+  pronouns    String?  @db.Text
+  bio         String?  @db.Text
+  cpSubtype   String?  @db.Text
+  mobilityAids String[] @default([]) @db.Text
+  location    String?  @db.Text      // free-form city/region; keep optional for privacy
+  a11yPrefs   Json?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Follow {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  followerId  String @db.Uuid
+  followeeId  String @db.Uuid
+  createdAt   DateTime @default(now())
+
+  follower    User   @relation("follows_follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee    User   @relation("follows_followee", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeId])
+  @@index([followerId])
+  @@index([followeeId])
+  @@map("follows")
+}
+
+model Post {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authorId    String         @db.Uuid
+  body        String         @db.Text
+  images      String[]       @default([]) @db.Text
+  cwLabel     String?        @db.Text
+  visibility  Visibility     @default(PUBLIC)
+  status      ContentStatus  @default(ACTIVE)
+
+  author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags        PostTag[]
+  comments    Comment[]
+  reactions   Reaction[]     @relation("reaction_post")
+  reports     Report[]       @relation("reports_post")
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([authorId, createdAt(sort: Desc)])
+  @@map("posts")
+}
+
+model PostTag {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId  String @db.Uuid
+  tag     String @db.Text
+
+  post    Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([tag])
+  @@unique([postId, tag])
+  @@map("post_tags")
+}
+
+model Comment {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId      String        @db.Uuid
+  authorId    String        @db.Uuid
+  parentId    String?       @db.Uuid
+  body        String        @db.Text
+  status      ContentStatus @default(ACTIVE)
+
+  post        Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      Comment?      @relation("comment_parent", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Comment[]     @relation("comment_parent")
+  reactions   Reaction[]    @relation("reaction_comment")
+  reports     Report[]      @relation("reports_comment")
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([postId])
+  @@index([authorId, createdAt(sort: Desc)])
+  @@map("comments")
+}
+
+model Reaction {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String       @db.Uuid
+  kind        ReactionKind
+
+  // Polymorphic target: either Post or Comment (one of the FKs must be set)
+  postId      String?      @db.Uuid
+  commentId   String?      @db.Uuid
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post?        @relation("reaction_post", fields: [postId], references: [id], onDelete: Cascade)
+  comment     Comment?     @relation("reaction_comment", fields: [commentId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+
+  @@unique([userId, postId, commentId], map: "uniq_reaction_per_subject")
+  @@index([postId])
+  @@index([commentId])
+  @@map("reactions")
+}
+
+model Recommendation {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind        RecommendationKind
+  title       String              @db.Text
+  body        String              @db.Text
+  authorId    String              @db.Uuid
+  region      String?             @db.Text
+  url         String?             @db.Text
+  meta        Json?               // flexible fields per kind (e.g., difficulty, body_area, cost)
+  status      ContentStatus       @default(ACTIVE)
+
+  author      User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reviews     RecommendationReview[]
+  reports     Report[]            @relation("reports_recommendation")
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([kind])
+  @@index([authorId, createdAt(sort: Desc)])
+  @@map("recommendations")
+}
+
+model RecommendationReview {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recommendationId  String   @db.Uuid
+  reviewerId        String   @db.Uuid
+  rating            Int
+  notes             String?  @db.Text
+
+  recommendation    Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  reviewer          User           @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime @default(now())
+
+  @@unique([recommendationId, reviewerId])
+  @@index([reviewerId])
+  @@map("recommendation_reviews")
+}
+
+model MessageThread {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdById String   @db.Uuid
+  isBlocked   Boolean  @default(false)
+
+  createdBy   User     @relation("threads_created_by", fields: [createdById], references: [id], onDelete: Cascade)
+  messages    Message[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("message_threads")
+}
+
+model Message {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  threadId   String   @db.Uuid
+  senderId   String   @db.Uuid
+  body       String   @db.Text
+  attachments String[] @default([]) @db.Text
+
+  thread     MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender     User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reports    Report[]      @relation("reports_message")
+
+  createdAt  DateTime  @default(now())
+
+  @@index([threadId, createdAt(sort: Desc)])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Report {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectType SubjectType
+  subjectId   String       @db.Uuid
+  reporterId  String       @db.Uuid
+  reason      String       @db.Text
+  status      ReportStatus @default(OPEN)
+
+  reporter    User         @relation("reports_reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  moderationActions ModerationAction[]
+
+  // Polymorphic relations (optional, helps with type safety)
+  post        Post?        @relation("reports_post", fields: [subjectId], references: [id], onDelete: Cascade, map: "fk_reports_post")
+  comment     Comment?     @relation("reports_comment", fields: [subjectId], references: [id], onDelete: Cascade, map: "fk_reports_comment")
+  recommendation Recommendation? @relation("reports_recommendation", fields: [subjectId], references: [id], onDelete: Cascade, map: "fk_reports_recommendation")
+  message     Message?     @relation("reports_message", fields: [subjectId], references: [id], onDelete: Cascade, map: "fk_reports_message")
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([subjectType, subjectId])
+  @@index([reporterId])
+  @@map("reports")
+}
+
+model ModerationAction {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportId    String               @db.Uuid
+  actorId     String               @db.Uuid
+  action      ModerationActionType
+  notes       String?              @db.Text
+
+  report      Report               @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  actor       User                 @relation("moderation_actions_actor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime             @default(now())
+
+  @@index([reportId])
+  @@index([actorId])
+  @@map("moderation_actions")
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  payload   Json
+  readAt    DateTime?
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId     String?  @db.Uuid
+  action      String   @db.Text
+  targetType  String   @db.Text
+  targetId    String?  @db.Uuid
+  detail      Json?
+
+  actor       User?    @relation("audit_logs_actor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
