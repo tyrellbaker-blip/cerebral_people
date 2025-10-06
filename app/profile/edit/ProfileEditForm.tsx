@@ -67,7 +67,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
             type="text"
             defaultValue={profile?.displayName ?? ""}
             required
-            className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
         </div>
 
@@ -81,7 +81,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
             type="text"
             placeholder="e.g., she/her, he/him, they/them"
             defaultValue={profile?.pronouns ?? ""}
-            className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
         </div>
 
@@ -95,7 +95,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
             rows={4}
             placeholder="Tell us about yourself..."
             defaultValue={profile?.bio ?? ""}
-            className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
         </div>
 
@@ -109,7 +109,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
             type="text"
             placeholder="e.g., San Francisco, CA"
             defaultValue={profile?.region ?? ""}
-            className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           <p className="text-xs text-amber-600 mt-1">Optional - share as much or as little as you want</p>
         </div>
@@ -130,7 +130,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
               id="cpSubtype"
               name="cpSubtype"
               defaultValue={profile?.cpSubtype ?? "UNKNOWN"}
-              className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="UNKNOWN">Prefer not to say</option>
               <option value="SPASTIC">Spastic</option>
@@ -148,7 +148,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
               id="gmfcs"
               name="gmfcs"
               defaultValue={profile?.gmfcs ?? "UNKNOWN"}
-              className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="UNKNOWN">Prefer not to say</option>
               <option value="I">I - Walks without limitations</option>
@@ -210,7 +210,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
               min={1}
               max={5}
               defaultValue={profile?.exerciseTolerance ?? 3}
-              className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
             <p className="text-xs text-amber-600 mt-1">1 = Very low, 5 = Very high</p>
           </div>
@@ -223,7 +223,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
               id="transport"
               name="transport"
               defaultValue={profile?.transport ?? "OTHER"}
-              className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="PUBLIC_TRANSIT">Public Transit</option>
               <option value="RIDE_SHARE">Ride Share</option>
@@ -262,7 +262,7 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
               id="fontSize"
               name="fontSize"
               defaultValue={a11y.fontSize ?? "md"}
-              className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="sm">Small</option>
               <option value="md">Medium</option>

@@ -70,7 +70,7 @@ export default function CredentialsSignInForm({ signInAction }: CredentialsSignI
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="username" className="block text-sm font-medium mb-2">
+        <label htmlFor="username" className="block text-sm font-medium text-amber-900 mb-2">
           Username
         </label>
         <input
@@ -80,7 +80,7 @@ export default function CredentialsSignInForm({ signInAction }: CredentialsSignI
           autoComplete="username"
           value={formData.username}
           onChange={handleChange}
-          className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           disabled={isLoading}
         />
         {errors.username && (
@@ -91,7 +91,7 @@ export default function CredentialsSignInForm({ signInAction }: CredentialsSignI
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium mb-2">
+        <label htmlFor="password" className="block text-sm font-medium text-amber-900 mb-2">
           Password
         </label>
         <input
@@ -101,7 +101,7 @@ export default function CredentialsSignInForm({ signInAction }: CredentialsSignI
           autoComplete="current-password"
           value={formData.password}
           onChange={handleChange}
-          className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           disabled={isLoading}
         />
         {errors.password && (
