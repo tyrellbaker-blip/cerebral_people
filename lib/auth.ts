@@ -1,1 +1,1 @@
-export { auth } from "@/app/api/auth/[...nextauth]/route";
+export { auth, signOut } from "@/app/api/auth/[...nextauth]/route";

@@ -69,6 +69,63 @@ enum NotificationType {
   SYSTEM
 }
 
+// CP-specific enums
+enum CPSubtype {
+  SPASTIC
+  DYSKINETIC
+  ATAXIC
+  MIXED
+  UNKNOWN
+}
+
+enum GMFCS {
+  I
+  II
+  III
+  IV
+  V
+  UNKNOWN
+}
+
+enum MobilityAid {
+  NONE
+  CANE
+  WALKER
+  MANUAL_CHAIR
+  POWER_CHAIR
+  ANKLE_FOOT_ORTHOSIS
+  OTHER
+}
+
+enum AssistiveTech {
+  SPEECH_DEVICE
+  EYETRACKER
+  SWITCH_CONTROL
+  HEADPOINTER
+  VOICE_CONTROL
+  SCREEN_READER
+  ALT_KEYBOARD
+  OTHER
+}
+
+enum CommMode {
+  TYPING
+  VOICE
+  TEXT_TO_SPEECH
+  AAC
+  GESTURES
+}
+
+enum Transport {
+  PUBLIC_TRANSIT
+  RIDE_SHARE
+  ADAPTED_VAN
+  PARATRANSIT
+  FAMILY
+  FRIENDS
+  OTHER
+}
+
 // ───────────────────────────────────────────────────────────────────────────────
 // Models
 // Notes:
@@ -80,8 +137,11 @@ enum NotificationType {
 
 model User {
   id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String?    @unique @db.Text
+  password      String?    @db.Text
   email         String?    @unique @db.Text
   emailVerified DateTime?
+  dateOfBirth   DateTime?
   name          String?    @db.Text
   image         String?    @db.Text
   passkeyEnrolled Boolean  @default(false)
@@ -153,13 +213,31 @@ model VerificationToken {
 model Profile {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId      String   @unique @db.Uuid
+
   displayName String?  @db.Text
   pronouns    String?  @db.Text
   bio         String?  @db.Text
-  cpSubtype   String?  @db.Text
-  mobilityAids String[] @default([]) @db.Text
-  location    String?  @db.Text      // free-form city/region; keep optional for privacy
-  a11yPrefs   Json?
+  region      String?  @db.Text  // free-form city/region; keep optional for privacy
+  photos      String[] @default([]) @db.Text  // array of photo URLs
+
+  // CP-specific fields
+  cpSubtype   CPSubtype?    @default(UNKNOWN)
+  gmfcs       GMFCS?        @default(UNKNOWN)
+  mobilityAids     MobilityAid[]   @default([])
+  assistiveTech    AssistiveTech[] @default([])
+  commModes        CommMode[]      @default([])
+  exerciseTolerance Int?           // 1-5 scale
+  bestTimes        String[]   @default([]) @db.Text  // e.g., ["MORNING","AFTERNOON"]
+  transport        Transport? @default(OTHER)
+
+  // Accessibility preferences
+  a11yPrefs   Json?  // {fontSize:'md/lg', contrast:'high', reduceMotion:true, dyslexiaFont:true}
+
+  // Per-field visibility (JSON map)
+  visibility  Json?  // {bio:'PUBLIC', region:'FOLLOWERS', gmfcs:'PRIVATE', ...}
+
+  // Badges
+  badges      String[] @default([]) @db.Text  // ['18_PLUS','ACCESSIBILITY_ADVOCATE','FIRST_POST','REC_HELPER']
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
