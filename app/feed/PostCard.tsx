@@ -4,6 +4,7 @@ import { useState } from "react";
 import { deletePost } from "../actions/deletePost";
 import { updatePost } from "../actions/updatePost";
 import ReactionButtons from "./ReactionButtons";
+import VoiceControls from "./VoiceControls";
 
 interface PostCardProps {
   post: {
@@ -179,6 +180,11 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
       ) : (
         <>
           <p className="text-amber-900 leading-relaxed">{post.body}</p>
+
+          {/* Text-to-Speech */}
+          <div className="mt-3">
+            <VoiceControls textToSpeak={post.body} />
+          </div>
 
           {/* Reactions */}
           <div className="mt-4">

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPost } from "../actions/createPost";
 import PostCard from "./PostCard";
 import FeedLayoutToggle, { LayoutMode } from "./FeedLayoutToggle";
+import VoiceControls from "./VoiceControls";
+import PacingMode from "./PacingMode";
 
 interface FeedClientProps {
   posts: any[];
@@ -12,15 +14,39 @@ interface FeedClientProps {
 
 export default function FeedClient({ posts, currentUserId }: FeedClientProps) {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("spacious");
+  const [postBody, setPostBody] = useState("");
+  const [pacingModeEnabled, setPacingModeEnabled] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Load pacing mode preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("pacingModeEnabled");
+    if (saved) {
+      setPacingModeEnabled(saved === "true");
+    }
+  }, []);
 
   const spacingClass = layoutMode === "compact" ? "space-y-3" : "space-y-6";
   const composerPadding = layoutMode === "compact" ? "p-4" : "p-6";
   const postCardSpacing = layoutMode === "compact" ? "space-y-3" : "space-y-4";
 
+  const handleVoiceTranscript = (transcript: string) => {
+    setPostBody((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const handlePacingModeToggle = (enabled: boolean) => {
+    setPacingModeEnabled(enabled);
+    localStorage.setItem("pacingModeEnabled", enabled.toString());
+  };
+
   return (
     <>
-      {/* Layout Toggle */}
-      <div className="flex justify-end">
+      {/* Controls Row */}
+      <div className="flex justify-between items-start gap-4 flex-wrap">
+        <PacingMode enabled={pacingModeEnabled} onToggle={handlePacingModeToggle} />
         <FeedLayoutToggle onLayoutChange={setLayoutMode} />
       </div>
 
@@ -101,14 +127,20 @@ export default function FeedClient({ posts, currentUserId }: FeedClientProps) {
             </select>
           </div>
 
-          {/* Post Body */}
-          <textarea
-            name="body"
-            placeholder="Share something helpful…"
-            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-            rows={layoutMode === "compact" ? 2 : 3}
-            required
-          />
+          {/* Post Body with Voice Controls */}
+          <div className="space-y-2">
+            <textarea
+              ref={textareaRef}
+              name="body"
+              value={postBody}
+              onChange={(e) => setPostBody(e.target.value)}
+              placeholder="Share something helpful…"
+              className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              rows={layoutMode === "compact" ? 2 : 3}
+              required
+            />
+            <VoiceControls onTranscript={handleVoiceTranscript} />
+          </div>
 
           {/* Controls */}
           <div className="flex items-center gap-3">
