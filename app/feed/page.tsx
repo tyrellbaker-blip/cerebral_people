@@ -24,11 +24,11 @@ export default async function FeedPage() {
           <textarea
             name="body"
             placeholder="Share something helpful…"
-            className="w-full rounded-lg border border-amber-200 p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             rows={3}
           />
           <div className="flex items-center gap-3">
-            <select name="visibility" className="rounded-lg border border-amber-200 px-3 py-2 text-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <select name="visibility" className="rounded-lg border border-amber-200 px-3 py-2 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
               <option value="PUBLIC">Public</option>
               <option value="FOLLOWERS">Followers</option>
               <option value="PRIVATE">Private</option>

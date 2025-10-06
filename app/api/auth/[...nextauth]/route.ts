@@ -98,7 +98,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async session({ session, token }) {
-      if (token?.sub) (session.user as any).id = token.sub;
+      if (token?.sub) {
+        // Verify user still exists in database
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+        });
+
+        // If user doesn't exist, return null to invalidate session
+        if (!user) {
+          return null as any;
+        }
+
+        (session.user as any).id = token.sub;
+      }
       return session;
     },
   },
