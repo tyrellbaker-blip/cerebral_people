@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import bcrypt from "bcryptjs";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -58,6 +58,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       from: process.env.EMAIL_FROM || "noreply@cerebralpeople.com",
       sendVerificationRequest: async ({ identifier: email, url }) => {
+        if (!resend) {
+          console.error("Resend API key not configured");
+          throw new Error("Email service not configured");
+        }
+
         try {
           await resend.emails.send({
             from: process.env.EMAIL_FROM || "Cerebral People <noreply@cerebralpeople.com>",
