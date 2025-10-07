@@ -1,7 +1,6 @@
 "use server";
 
 import { signIn } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
 
 export async function signInWithEmail(formData: FormData) {
   const email = formData.get("email") as string;

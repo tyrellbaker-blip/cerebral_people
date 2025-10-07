@@ -4,7 +4,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function updatePost(postId: string, body: string, visibility: string) {
+export async function updatePost(
+  postId: string,
+  body: string,
+  visibility: string,
+  tags?: string[]
+) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -33,6 +38,25 @@ export async function updatePost(postId: string, body: string, visibility: strin
       visibility: visibility as "PUBLIC" | "FOLLOWERS" | "PRIVATE",
     },
   });
+
+  // Update tags if provided
+  if (tags !== undefined) {
+    // Delete existing tags
+    await prisma.postTag.deleteMany({
+      where: { postId },
+    });
+
+    // Create new tags
+    if (tags.length > 0) {
+      await prisma.postTag.createMany({
+        data: tags.map(tag => ({
+          postId,
+          tag: tag.toLowerCase(),
+        })),
+        skipDuplicates: true,
+      });
+    }
+  }
 
   revalidatePath("/feed");
 }

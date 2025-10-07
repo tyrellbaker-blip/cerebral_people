@@ -11,8 +11,10 @@ export default async function ProfileEditPage() {
     redirect("/signin");
   }
 
+  const userId = (session.user as any).id as string;
+
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: userId },
     include: { profile: true },
   });
 
@@ -35,6 +37,8 @@ export default async function ProfileEditPage() {
 
           <ProfileEditForm
             profile={user?.profile}
+            userId={userId}
+            currentImage={user?.image}
             updateProfileAction={updateProfileAction}
           />
         </div>

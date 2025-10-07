@@ -36,6 +36,7 @@ export async function updateProfileAction(formData: FormData) {
   const pronouns = formData.get("pronouns")?.toString() || null;
   const bio = formData.get("bio")?.toString() || null;
   const region = formData.get("region")?.toString() || null;
+  const profileImageUrl = formData.get("profileImageUrl")?.toString() || null;
 
   // CP-specific fields
   const cpSubtype = formData.get("cpSubtype")?.toString() || "UNKNOWN";
@@ -65,6 +66,14 @@ export async function updateProfileAction(formData: FormData) {
   // Validate required fields
   if (!displayName) {
     throw new Error("Display name is required");
+  }
+
+  // Update user image if profile image URL is provided
+  if (profileImageUrl) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { image: profileImageUrl },
+    });
   }
 
   // Upsert profile

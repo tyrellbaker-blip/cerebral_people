@@ -53,7 +53,8 @@ const signUpSchema = z.object({
   }
 });
 
-type SignUpFormData = z.infer<typeof signUpSchema>;
+// Type for form validation (not currently used but kept for future use)
+// type SignUpFormData = z.infer<typeof signUpSchema>;
 
 interface SignUpFormProps {
   signUpAction?: (formData: FormData) => Promise<void>;
@@ -85,13 +86,11 @@ export default function SignUpForm({ signUpAction }: SignUpFormProps) {
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      if (result.error && result.error.errors) {
-        result.error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0].toString()] = err.message;
-          }
-        });
-      }
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[String(issue.path[0])] = issue.message;
+        }
+      });
       setErrors(fieldErrors);
     } else {
       setErrors({});
@@ -107,13 +106,11 @@ export default function SignUpForm({ signUpAction }: SignUpFormProps) {
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      if (result.error && result.error.errors) {
-        result.error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0].toString()] = err.message;
-          }
-        });
-      }
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[String(issue.path[0])] = issue.message;
+        }
+      });
       setErrors(fieldErrors);
       return;
     }
@@ -147,7 +144,7 @@ export default function SignUpForm({ signUpAction }: SignUpFormProps) {
         cpSubtype: "UNKNOWN",
         gmfcs: "UNKNOWN",
       });
-    } catch (error) {
+    } catch {
       setErrors({ submit: "Failed to create account. Please try again." });
     } finally {
       setIsLoading(false);

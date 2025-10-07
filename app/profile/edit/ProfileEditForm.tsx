@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { DEFAULT_VIS } from "@/lib/profile";
+import ImageUpload from "./ImageUpload";
 
 interface ProfileEditFormProps {
   profile?: any;
+  userId: string;
+  currentImage?: string | null;
   updateProfileAction: (formData: FormData) => Promise<void>;
 }
 
@@ -24,8 +27,9 @@ const FIELDS = [
   "a11yPrefs",
 ] as const;
 
-export default function ProfileEditForm({ profile, updateProfileAction }: ProfileEditFormProps) {
+export default function ProfileEditForm({ profile, userId, currentImage, updateProfileAction }: ProfileEditFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const V = (profile?.visibility as any) || DEFAULT_VIS;
   const a11y = (profile?.a11yPrefs as any) || {};
 
@@ -34,6 +38,10 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
     setIsLoading(true);
     try {
       const formData = new FormData(e.currentTarget);
+      // Add uploaded image URL if available
+      if (uploadedImageUrl) {
+        formData.set("profileImageUrl", uploadedImageUrl);
+      }
       await updateProfileAction(formData);
     } catch (error) {
       alert("Failed to save profile");
@@ -96,6 +104,17 @@ export default function ProfileEditForm({ profile, updateProfileAction }: Profil
             placeholder="Tell us about yourself..."
             defaultValue={profile?.bio ?? ""}
             className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-amber-900 mb-2">
+            Profile Picture
+          </label>
+          <ImageUpload
+            currentImageUrl={currentImage}
+            userId={userId}
+            onImageUploaded={setUploadedImageUrl}
           />
         </div>
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { CPSubtype, GMFCS } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { DEFAULT_VIS } from "@/lib/profile";
@@ -53,25 +54,28 @@ export async function signUpAction(formData: FormData) {
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Create user with profile
+  // Create user with profile (auto-verify email)
   await prisma.user.create({
     data: {
       username,
       email,
       password: hashedPassword,
       dateOfBirth: new Date(dateOfBirth),
+      emailVerified: new Date(), // Auto-verify for now
       profile: {
         create: {
           displayName,
           pronouns: pronouns || null,
-          cpSubtype: (cpSubtype as any) || "UNKNOWN",
-          gmfcs: (gmfcs as any) || "UNKNOWN",
+          cpSubtype: (cpSubtype as CPSubtype) || CPSubtype.UNKNOWN,
+          gmfcs: (gmfcs as GMFCS) || GMFCS.UNKNOWN,
           badges: ["18_PLUS"], // All users have confirmed 18+
-          visibility: DEFAULT_VIS as any,
+          visibility: DEFAULT_VIS,
         },
       },
     },
   });
+
+  console.log(`✅ New user registered: ${username} (${email})`);
 
   // Redirect to sign in page
   redirect("/signin?registered=true");
