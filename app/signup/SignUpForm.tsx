@@ -57,7 +57,7 @@ const signUpSchema = z.object({
 // type SignUpFormData = z.infer<typeof signUpSchema>;
 
 interface SignUpFormProps {
-  signUpAction?: (formData: FormData) => Promise<{ success: false; error: string } | void>;
+  signUpAction?: (formData: FormData) => Promise<{ success: boolean; error?: string } | void>;
 }
 
 export default function SignUpForm({ signUpAction }: SignUpFormProps) {
