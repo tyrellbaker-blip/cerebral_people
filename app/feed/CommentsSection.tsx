@@ -242,6 +242,7 @@ export default function CommentsSection({
           commentCount === 1 ? "comment" : "comments"
         }`}
       >
+
         <svg
           className={`w-4 h-4 transition-transform motion-reduce:transition-none ${
             isExpanded ? "rotate-90" : ""
