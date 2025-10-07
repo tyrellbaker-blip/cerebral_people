@@ -57,7 +57,7 @@ const signUpSchema = z.object({
 // type SignUpFormData = z.infer<typeof signUpSchema>;
 
 interface SignUpFormProps {
-  signUpAction?: (formData: FormData) => Promise<void>;
+  signUpAction?: (formData: FormData) => Promise<{ success: false; error: string } | void>;
 }
 
 export default function SignUpForm({ signUpAction }: SignUpFormProps) {
@@ -129,7 +129,14 @@ export default function SignUpForm({ signUpAction }: SignUpFormProps) {
       formDataObj.append("gmfcs", formData.gmfcs);
 
       if (signUpAction) {
-        await signUpAction(formDataObj);
+        const result = await signUpAction(formDataObj);
+
+        // If there's an error result, display it
+        if (result && !result.success) {
+          setErrors({ submit: result.error || "Failed to create account. Please try again." });
+          setIsLoading(false);
+          return;
+        }
       }
 
       setSuccess(true);
@@ -144,8 +151,8 @@ export default function SignUpForm({ signUpAction }: SignUpFormProps) {
         cpSubtype: "UNKNOWN",
         gmfcs: "UNKNOWN",
       });
-    } catch {
-      setErrors({ submit: "Failed to create account. Please try again." });
+    } catch (error) {
+      setErrors({ submit: error instanceof Error ? error.message : "Failed to create account. Please try again." });
     } finally {
       setIsLoading(false);
     }

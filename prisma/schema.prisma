@@ -222,7 +222,7 @@ model Profile {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId      String   @unique @db.Uuid
 
-  displayName String?  @db.Text
+  displayName String?  @unique @db.Text
   pronouns    String?  @db.Text
   bio         String?  @db.Text
   region      String?  @db.Text  // free-form city/region; keep optional for privacy
