@@ -59,7 +59,7 @@ export function applyVisibility<T extends Record<string, unknown>>(
   isFollowerFlag: boolean = false
 ): Partial<T> {
   const isOwner = viewerId === ownerId;
-  const out: Partial<T> = {};
+  const out: Record<string, unknown> = {};
   const visSettings = (vis as Record<string, string> | null) ?? {};
 
   for (const key of Object.keys(data)) {
@@ -67,18 +67,18 @@ export function applyVisibility<T extends Record<string, unknown>>(
 
     if (isOwner) {
       // Owner sees everything
-      out[key as keyof T] = data[key];
+      out[key] = data[key];
     } else if (mode === "PUBLIC") {
       // Public fields visible to everyone
-      out[key as keyof T] = data[key];
+      out[key] = data[key];
     } else if (mode === "FOLLOWERS" && isFollowerFlag) {
       // Followers-only fields visible to followers
-      out[key as keyof T] = data[key];
+      out[key] = data[key];
     }
     // PRIVATE fields are never shown to non-owners
   }
 
-  return out;
+  return out as Partial<T>;
 }
 
 export async function ensureProfile(userId: string) {
@@ -88,7 +88,7 @@ export async function ensureProfile(userId: string) {
     create: {
       userId,
       a11yPrefs: {},
-      visibility: DEFAULT_VIS as Prisma.JsonValue,
+      visibility: DEFAULT_VIS,
       badges: ["18_PLUS"],
     },
   });

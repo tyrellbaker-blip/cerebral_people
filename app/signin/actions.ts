@@ -15,13 +15,13 @@ export async function signInWithCredentials(formData: FormData) {
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
 
-  const result = await signIn("credentials", {
-    username,
-    password,
-    redirectTo: "/feed",
-  });
-
-  if (result?.error) {
+  try {
+    await signIn("credentials", {
+      username,
+      password,
+      redirectTo: "/feed",
+    });
+  } catch (error) {
     throw new Error("Invalid credentials");
   }
 }
