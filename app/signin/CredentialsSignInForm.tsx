@@ -41,9 +41,9 @@ export default function CredentialsSignInForm({ signInAction }: CredentialsSignI
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      result.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          fieldErrors[err.path[0].toString()] = err.message;
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[String(issue.path[0])] = issue.message;
         }
       });
       setErrors(fieldErrors);
@@ -126,7 +126,7 @@ export default function CredentialsSignInForm({ signInAction }: CredentialsSignI
       </button>
 
       <p className="text-sm text-center text-amber-700">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <a href="/signup" className="text-amber-800 underline hover:text-amber-900">
           Sign up
         </a>

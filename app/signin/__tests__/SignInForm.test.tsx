@@ -13,7 +13,7 @@ describe('SignInForm', () => {
 
   it('calls sign in action with valid email', async () => {
     const user = userEvent.setup()
-    const mockSignIn = jest.fn()
+    const mockSignIn = jest.fn().mockResolvedValue(undefined)
 
     render(<SignInForm signInAction={mockSignIn} />)
 
@@ -30,7 +30,7 @@ describe('SignInForm', () => {
 
   it('shows loading state during submission', async () => {
     const user = userEvent.setup()
-    const slowSignIn = jest.fn(() => new Promise(resolve => setTimeout(resolve, 100)))
+    const slowSignIn = jest.fn(() => new Promise<void>(resolve => setTimeout(resolve, 100)))
 
     render(<SignInForm signInAction={slowSignIn} />)
 
@@ -46,7 +46,7 @@ describe('SignInForm', () => {
 
   it('displays success message after submission', async () => {
     const user = userEvent.setup()
-    const mockSignIn = jest.fn()
+    const mockSignIn = jest.fn().mockResolvedValue(undefined)
 
     render(<SignInForm signInAction={mockSignIn} />)
 

@@ -1,6 +1,27 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
-export const DEFAULT_VIS = {
+type VisibilityLevel = "PUBLIC" | "FOLLOWERS" | "PRIVATE";
+
+type VisibilitySettings = {
+  displayName: VisibilityLevel;
+  pronouns: VisibilityLevel;
+  bio: VisibilityLevel;
+  region: VisibilityLevel;
+  cpSubtype: VisibilityLevel;
+  gmfcs: VisibilityLevel;
+  mobilityAids: VisibilityLevel;
+  assistiveTech: VisibilityLevel;
+  commModes: VisibilityLevel;
+  exerciseTolerance: VisibilityLevel;
+  bestTimes: VisibilityLevel;
+  transport: VisibilityLevel;
+  a11yPrefs: VisibilityLevel;
+  photos: VisibilityLevel;
+  badges: VisibilityLevel;
+};
+
+export const DEFAULT_VIS: VisibilitySettings = {
   displayName: "PUBLIC",
   pronouns: "PUBLIC",
   bio: "PUBLIC",
@@ -16,7 +37,7 @@ export const DEFAULT_VIS = {
   a11yPrefs: "PRIVATE",
   photos: "PUBLIC",
   badges: "PUBLIC",
-} as const;
+};
 
 export async function isFollowing(followerId: string, followeeId: string): Promise<boolean> {
   const follow = await prisma.follow.findUnique({
@@ -30,36 +51,34 @@ export async function isFollowing(followerId: string, followeeId: string): Promi
   return !!follow;
 }
 
-export function applyVisibility<T extends Record<string, any>>(
+export function applyVisibility<T extends Record<string, unknown>>(
   viewerId: string | null,
   ownerId: string,
   data: T,
-  vis: any,
+  vis: Prisma.JsonValue | null | undefined,
   isFollowerFlag: boolean = false
 ): Partial<T> {
   const isOwner = viewerId === ownerId;
-  const out: any = {};
+  const out: Partial<T> = {};
+  const visSettings = (vis as Record<string, string> | null) ?? {};
 
   for (const key of Object.keys(data)) {
-    const mode = (vis?.[key] ?? (DEFAULT_VIS as any)[key] ?? "PUBLIC") as
-      | "PUBLIC"
-      | "FOLLOWERS"
-      | "PRIVATE";
+    const mode = (visSettings[key] ?? DEFAULT_VIS[key as keyof VisibilitySettings] ?? "PUBLIC") as VisibilityLevel;
 
     if (isOwner) {
       // Owner sees everything
-      out[key] = data[key];
+      out[key as keyof T] = data[key];
     } else if (mode === "PUBLIC") {
       // Public fields visible to everyone
-      out[key] = data[key];
+      out[key as keyof T] = data[key];
     } else if (mode === "FOLLOWERS" && isFollowerFlag) {
       // Followers-only fields visible to followers
-      out[key] = data[key];
+      out[key as keyof T] = data[key];
     }
     // PRIVATE fields are never shown to non-owners
   }
 
-  return out as Partial<T>;
+  return out;
 }
 
 export async function ensureProfile(userId: string) {
@@ -69,7 +88,7 @@ export async function ensureProfile(userId: string) {
     create: {
       userId,
       a11yPrefs: {},
-      visibility: DEFAULT_VIS as any,
+      visibility: DEFAULT_VIS as Prisma.JsonValue,
       badges: ["18_PLUS"],
     },
   });

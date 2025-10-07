@@ -27,41 +27,41 @@ export default function FeedLayoutToggle({ onLayoutChange }: FeedLayoutTogglePro
   };
 
   return (
-    <div className="flex items-center gap-2 bg-white rounded-lg p-2 shadow-md">
-      <span className="text-sm text-amber-900 font-medium mr-2">Layout:</span>
+    <div className="flex items-center gap-2 bg-white/70 backdrop-blur-[2px] border border-white/60 rounded-[0.75rem] p-2 shadow-soft">
+      <span className="text-xs text-ink-700 font-medium mr-1">Density:</span>
       <button
         onClick={() => handleToggle("compact")}
         className={`
-          flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all
+          flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all motion-reduce:transition-none
           ${
             layoutMode === "compact"
-              ? "bg-amber-600 text-white"
-              : "bg-amber-50 text-amber-900 hover:bg-amber-100"
+              ? "bg-brand-500 text-white shadow-sm"
+              : "bg-white/70 text-ink-700 hover:bg-brand-50 border border-neutral-200"
           }
         `}
         title="Compact mode - Reading efficiency"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
-        <span>🧱 Compact</span>
+        <span>Compact</span>
       </button>
       <button
         onClick={() => handleToggle("spacious")}
         className={`
-          flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all
+          flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all motion-reduce:transition-none
           ${
             layoutMode === "spacious"
-              ? "bg-amber-600 text-white"
-              : "bg-amber-50 text-amber-900 hover:bg-amber-100"
+              ? "bg-brand-500 text-white shadow-sm"
+              : "bg-white/70 text-ink-700 hover:bg-brand-50 border border-neutral-200"
           }
         `}
         title="Spacious mode - Motor-ease, larger buttons"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 14h16M4 18h16" />
         </svg>
-        <span>🌿 Spacious</span>
+        <span>Spacious</span>
       </button>
     </div>
   );

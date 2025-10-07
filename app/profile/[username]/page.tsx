@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { applyVisibility, isFollowing } from "@/lib/profile";
 import Link from "next/link";
 import Image from "next/image";
+import FollowButton from "@/app/components/FollowButton";
 
 interface ProfilePageProps {
   params: {
@@ -39,17 +40,19 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
     notFound();
   }
 
+  const currentUserId = (session.user as any).id as string;
+
   // Check if this is the current user's profile
-  const isOwnProfile = session.user.id === profileUser.id;
+  const isOwnProfile = currentUserId === profileUser.id;
 
   // Check if current user is following this profile
-  const isFollowerFlag = isOwnProfile ? false : await isFollowing(session.user.id!, profileUser.id);
+  const isFollowerFlag = isOwnProfile ? false : await isFollowing(currentUserId, profileUser.id);
 
   const profile = profileUser.profile;
 
   // Apply privacy filtering
   const visibleData = applyVisibility(
-    session.user.id,
+    currentUserId,
     profileUser.id,
     {
       displayName: profile.displayName,
@@ -114,15 +117,13 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
                   Edit Profile
                 </Link>
               ) : (
-                <button
-                  className={`rounded-lg px-4 py-2 text-sm font-medium mb-2 ${
-                    isFollowerFlag
-                      ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      : "bg-amber-600 text-white hover:bg-amber-700"
-                  }`}
-                >
-                  {isFollowerFlag ? "Following" : "Follow"}
-                </button>
+                <div className="mb-2">
+                  <FollowButton
+                    username={username}
+                    isFollowing={isFollowerFlag}
+                    isOwnProfile={isOwnProfile}
+                  />
+                </div>
               )}
             </div>
 

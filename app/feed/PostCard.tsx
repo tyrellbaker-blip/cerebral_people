@@ -1,10 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { deletePost } from "../actions/deletePost";
 import { updatePost } from "../actions/updatePost";
 import ReactionButtons from "./ReactionButtons";
 import VoiceControls from "./VoiceControls";
+import CommentsSection from "./CommentsSection";
+import EnergyHalo from "../components/EnergyHalo";
+import {
+  glassCard,
+  hairlineDivider,
+  textareaBase,
+  inputBase,
+  buttonPrimary,
+  buttonSecondary,
+  badgeSecondary,
+  energyLevelToEmoji,
+  energyLevelToLabel,
+} from "../components/cardStyles";
 
 interface PostCardProps {
   post: {
@@ -18,6 +32,7 @@ interface PostCardProps {
     author: {
       username: string | null;
       name: string | null;
+      image: string | null;
       profile: {
         displayName: string | null;
       } | null;
@@ -26,24 +41,43 @@ interface PostCardProps {
       kind: string;
       userId: string;
     }[];
+    comments?: {
+      id: string;
+      body: string;
+      createdAt: Date;
+      authorId: string;
+      parentId: string | null;
+      author: {
+        username: string | null;
+        name: string | null;
+        image: string | null;
+        profile: {
+          displayName: string | null;
+        } | null;
+      };
+    }[];
+    _count?: {
+      comments: number;
+    };
   };
   currentUserId: string;
 }
 
-// Energy level colors and emojis
-const energyConfig = {
-  1: { emoji: "😴", label: "Low energy", color: "bg-blue-50 border-l-4 border-l-blue-400" },
-  2: { emoji: "😐", label: "Medium-low energy", color: "bg-green-50 border-l-4 border-l-green-400" },
-  3: { emoji: "🙂", label: "Medium-high energy", color: "bg-amber-50 border-l-4 border-l-amber-400" },
-  4: { emoji: "💪", label: "High energy", color: "bg-orange-50 border-l-4 border-l-orange-400" },
-};
-
-// Post type styling
+// Post type styling with warm design system
 const postTypeConfig = {
-  GENERAL: { label: "", color: "" },
-  ASSISTIVE_WIN: { label: "🎉 Assistive Win", color: "bg-gradient-to-r from-amber-100 to-orange-100" },
-  QUESTION: { label: "❓ Question", color: "bg-purple-50" },
-  RECOMMENDATION: { label: "💡 Recommendation", color: "bg-blue-50" },
+  GENERAL: { label: "", badge: "" },
+  ASSISTIVE_WIN: {
+    label: "🎉 Assistive Win",
+    badge: "inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#8FBF8F]/20 to-brand-200/30 px-3 py-1 text-xs font-medium text-[#4A7C4A] border border-[#8FBF8F]/30",
+  },
+  QUESTION: {
+    label: "❓ Question",
+    badge: "inline-flex items-center gap-1 rounded-full bg-[#E6A1A6]/20 px-3 py-1 text-xs font-medium text-[#8B4548] border border-[#E6A1A6]/30",
+  },
+  RECOMMENDATION: {
+    label: "💡 Recommendation",
+    badge: "inline-flex items-center gap-1 rounded-full bg-[#E5B769]/20 px-3 py-1 text-xs font-medium text-[#8B6E3D] border border-[#E5B769]/30",
+  },
 };
 
 export default function PostCard({ post, currentUserId }: PostCardProps) {
@@ -84,42 +118,89 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
     setIsEditing(false);
   };
 
-  const energyInfo = post.energyLevel ? energyConfig[post.energyLevel as keyof typeof energyConfig] : null;
-  const postTypeInfo = postTypeConfig[post.postType as keyof typeof postTypeConfig] || postTypeConfig.GENERAL;
-
-  // Combine energy and post type colors
-  const cardBackgroundClass = postTypeInfo.color || (energyInfo?.color || "bg-white");
+  const postTypeInfo =
+    postTypeConfig[post.postType as keyof typeof postTypeConfig] ||
+    postTypeConfig.GENERAL;
   const isAssistiveWin = post.postType === "ASSISTIVE_WIN";
 
-  return (
-    <article className={`rounded-2xl shadow-[0_4px_8px_rgba(255,135,65,0.15)] p-6 transition-all ${cardBackgroundClass} ${isAssistiveWin ? 'ring-2 ring-amber-300' : ''}`}>
-      {/* Header */}
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex-1">
-          {/* Post Type Badge */}
-          {postTypeInfo.label && (
-            <div className="inline-block px-2 py-1 mb-2 text-xs font-medium rounded-full bg-white/80 text-amber-900">
-              {postTypeInfo.label}
-            </div>
-          )}
+  // Map energy level to EnergyHalo level
+  const getEnergyHaloLevel = (
+    energyLevel: number | null
+  ): "NONE" | "LOW" | "MEDIUM" | "HIGH" => {
+    if (!energyLevel) return "NONE";
+    if (energyLevel === 1) return "LOW";
+    if (energyLevel === 4) return "HIGH";
+    return "MEDIUM";
+  };
 
-          <div className="flex items-center gap-2">
-            <div className="font-medium text-amber-900">
-              {post.author?.profile?.displayName ||
-                post.author?.username ||
-                post.author?.name ||
-                "Anonymous"}
+  return (
+    <article
+      className={`${glassCard} p-6 ${
+        isAssistiveWin ? "ring-2 ring-[#8FBF8F]/40" : ""
+      }`}
+    >
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex gap-3 flex-1">
+          {/* Profile Picture with Energy Halo */}
+          <div className="flex-shrink-0 relative">
+            <EnergyHalo level={getEnergyHaloLevel(post.energyLevel)} size="md" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              {post.author?.image ? (
+                <Image
+                  src={post.author.image}
+                  alt={
+                    post.author?.profile?.displayName ||
+                    post.author?.username ||
+                    "User"
+                  }
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
+                  <span className="text-base font-bold text-brand-700">
+                    {(
+                      post.author?.profile?.displayName ||
+                      post.author?.username ||
+                      "?"
+                    )
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                </div>
+              )}
             </div>
-            {/* Energy Indicator */}
-            {energyInfo && (
-              <span className="text-lg" title={energyInfo.label}>
-                {energyInfo.emoji}
-              </span>
-            )}
           </div>
 
-          <div className="text-xs text-amber-700 mt-1">
-            {new Date(post.createdAt).toLocaleString()}
+          <div className="flex-1 min-w-0">
+            {/* Post Type Badge */}
+            {postTypeInfo.label && (
+              <div className={postTypeInfo.badge}>{postTypeInfo.label}</div>
+            )}
+
+            <div className="flex items-center gap-2 mt-1">
+              <div className="font-medium text-ink-900">
+                {post.author?.profile?.displayName ||
+                  post.author?.username ||
+                  post.author?.name ||
+                  "Anonymous"}
+              </div>
+              {post.energyLevel && (
+                <span
+                  className="text-sm"
+                  title={energyLevelToLabel(post.energyLevel)}
+                  aria-label={energyLevelToLabel(post.energyLevel)}
+                >
+                  {energyLevelToEmoji(post.energyLevel)}
+                </span>
+              )}
+            </div>
+
+            <div className="text-xs text-ink-500 mt-0.5">
+              {new Date(post.createdAt).toLocaleString()}
+            </div>
           </div>
         </div>
 
@@ -127,14 +208,16 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
           <div className="flex gap-2">
             <button
               onClick={() => setIsEditing(true)}
-              className="text-sm text-amber-600 hover:text-amber-700 px-2 py-1 transition-colors"
+              className="text-sm text-brand-600 hover:text-brand-700 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors motion-reduce:transition-none"
+              aria-label="Edit post"
             >
               Edit
             </button>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="text-sm text-red-600 hover:text-red-700 px-2 py-1 disabled:opacity-50 transition-colors"
+              className="text-sm text-[#C44C4C] hover:text-[#A43838] px-3 py-1.5 rounded-lg hover:bg-[#E6A1A6]/10 disabled:opacity-50 transition-colors motion-reduce:transition-none"
+              aria-label="Delete post"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
@@ -148,46 +231,45 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
           <textarea
             value={editBody}
             onChange={(e) => setEditBody(e.target.value)}
-            className="w-full rounded-lg border border-amber-200 p-3 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className={textareaBase}
             rows={3}
             required
           />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <select
               value={editVisibility}
               onChange={(e) => setEditVisibility(e.target.value)}
-              className="rounded-lg border border-amber-200 px-3 py-2 text-amber-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className={inputBase}
+              style={{ width: "auto" }}
             >
               <option value="PUBLIC">Public</option>
               <option value="FOLLOWERS">Followers</option>
               <option value="PRIVATE">Private</option>
             </select>
-            <button
-              type="submit"
-              className="rounded-lg bg-amber-600 text-white px-4 py-2 text-sm font-medium hover:bg-amber-700 transition-colors"
-            >
+            <button type="submit" className={buttonPrimary}>
               Save
             </button>
-            <button
-              type="button"
-              onClick={handleCancelEdit}
-              className="rounded-lg bg-gray-200 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition-colors"
-            >
+            <button type="button" onClick={handleCancelEdit} className={buttonSecondary}>
               Cancel
             </button>
           </div>
         </form>
       ) : (
         <>
-          <p className="text-amber-900 leading-relaxed">{post.body}</p>
+          <p className="text-ink-900 leading-relaxed [text-wrap:pretty]">
+            {post.body}
+          </p>
+
+          {/* Hairline Divider */}
+          <hr className={`${hairlineDivider} my-4`} />
 
           {/* Text-to-Speech */}
-          <div className="mt-3">
+          <div className="mb-3">
             <VoiceControls textToSpeak={post.body} />
           </div>
 
           {/* Reactions */}
-          <div className="mt-4">
+          <div className="mb-4">
             <ReactionButtons
               postId={post.id}
               reactions={post.reactions}
@@ -195,11 +277,24 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
             />
           </div>
 
+          {/* Comments Section */}
+          {post.comments && post._count && (
+            <>
+              <hr className={`${hairlineDivider} my-4`} />
+              <CommentsSection
+                postId={post.id}
+                comments={post.comments}
+                commentCount={post._count.comments}
+                currentUserId={currentUserId}
+              />
+            </>
+          )}
+
           {/* Footer */}
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-amber-200">
-            <span className="text-xs px-2 py-1 rounded bg-white/60 text-amber-700">
-              {post.visibility}
-            </span>
+          <div className="flex items-center gap-3 mt-4 pt-4">
+            <hr className={`${hairlineDivider} flex-1`} />
+            <span className={badgeSecondary}>{post.visibility}</span>
+            <hr className={`${hairlineDivider} flex-1`} />
           </div>
         </>
       )}
