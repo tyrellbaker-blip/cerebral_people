@@ -2,6 +2,8 @@
 
 import { requireAdminAuth } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 /**
  * Get detailed user information including auth metadata
@@ -658,7 +660,6 @@ export async function triggerPasswordReset(userId: string) {
 
   // Generate a temporary password
   const tempPassword = Math.random().toString(36).slice(-12) + "!A1";
-  const bcrypt = require("bcryptjs");
   const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
   // Update user password
@@ -715,7 +716,6 @@ export async function impersonateUser(userId: string) {
   }
 
   // Create impersonation session token
-  const crypto = require("crypto");
   const sessionToken = crypto.randomBytes(32).toString("hex");
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1 hour impersonation session
