@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { getSuggestedUsers, type SuggestedUser } from "@/app/actions/getSuggestedUsers";
+import { followUser } from "@/app/actions/followUser";
 
 const railCard =
   "rounded-[1rem] bg-white/70 backdrop-blur-[2px] border border-white/60 shadow-soft p-4";
@@ -35,19 +38,47 @@ export function CalmCornerCard() {
 }
 
 export function PeopleToFollow() {
-  const suggestedUsers = [
-    {
-      name: "Jordan Ellis",
-      handle: "@jordan",
-      subtitle: "GMFCS II • Power chair",
-    },
-    { name: "Sam Rivera", handle: "@samr", subtitle: "Spastic CP • Advocate" },
-    {
-      name: "Alex Chen",
-      handle: "@alexc",
-      subtitle: "GMFCS III • Tech enthusiast",
-    },
-  ];
+  const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
+  const [displayedUsers, setDisplayedUsers] = useState<SuggestedUser[]>([]);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Load suggested users on mount
+    getSuggestedUsers().then((users) => {
+      setSuggestedUsers(users);
+      setDisplayedUsers(users.slice(0, 3)); // Show top 3
+    });
+  }, []);
+
+  const handleFollow = (username: string) => {
+    startTransition(async () => {
+      await followUser(username);
+
+      // Remove the followed user from the list
+      const newSuggested = suggestedUsers.filter(u => u.username !== username);
+      setSuggestedUsers(newSuggested);
+
+      // Update displayed users (show next person from the list)
+      setDisplayedUsers(newSuggested.slice(0, 3));
+
+      // Refresh to update follow counts, etc.
+      router.refresh();
+    });
+  };
+
+  if (displayedUsers.length === 0) {
+    return (
+      <div className={railCard}>
+        <h3 className="text-sm font-semibold text-ink-900 mb-3">
+          People to follow
+        </h3>
+        <p className="text-xs text-ink-500">
+          No suggestions available. Check back later!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className={railCard}>
@@ -55,22 +86,34 @@ export function PeopleToFollow() {
         People to follow
       </h3>
       <ul className="space-y-3">
-        {suggestedUsers.map((user) => (
-          <li key={user.handle} className="flex items-center justify-between">
+        {displayedUsers.map((user) => (
+          <li key={user.id} className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="size-8 rounded-full bg-brand-100 flex-shrink-0 border border-brand-200/50 flex items-center justify-center">
-                <span className="text-xs font-bold text-brand-700">
-                  {user.name.charAt(0)}
-                </span>
-              </div>
+              {user.image ? (
+                <img
+                  src={user.image}
+                  alt={user.displayName || user.username}
+                  className="size-8 rounded-full flex-shrink-0 border border-brand-200/50"
+                />
+              ) : (
+                <div className="size-8 rounded-full bg-brand-100 flex-shrink-0 border border-brand-200/50 flex items-center justify-center">
+                  <span className="text-xs font-bold text-brand-700">
+                    {(user.displayName || user.username).charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div className="text-xs min-w-0">
                 <div className="font-medium text-ink-900 truncate">
-                  {user.name}
+                  {user.displayName || user.username}
                 </div>
-                <div className="text-ink-500/80 truncate">{user.subtitle}</div>
+                <div className="text-ink-500/80 truncate">{user.distance}</div>
               </div>
             </div>
-            <button className="px-2.5 py-1 rounded-lg border border-brand-500/30 bg-white/70 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors flex-shrink-0">
+            <button
+              onClick={() => handleFollow(user.username)}
+              disabled={isPending}
+              className="px-2.5 py-1 rounded-lg border border-brand-500/30 bg-white/70 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors flex-shrink-0 disabled:opacity-50"
+            >
               Follow
             </button>
           </li>
@@ -82,9 +125,42 @@ export function PeopleToFollow() {
 
 export function AccessibilityQuickToggles() {
   const [settings, setSettings] = useState({
+    fontSize: 100,
     highContrast: false,
     reduceMotion: false,
   });
+
+  const increaseFontSize = () => {
+    const newSize = Math.min(settings.fontSize + 10, 150);
+    setSettings({ ...settings, fontSize: newSize });
+    document.documentElement.style.fontSize = `${newSize}%`;
+  };
+
+  const decreaseFontSize = () => {
+    const newSize = Math.max(settings.fontSize - 10, 80);
+    setSettings({ ...settings, fontSize: newSize });
+    document.documentElement.style.fontSize = `${newSize}%`;
+  };
+
+  const toggleHighContrast = () => {
+    const newValue = !settings.highContrast;
+    setSettings({ ...settings, highContrast: newValue });
+    if (newValue) {
+      document.documentElement.classList.add("high-contrast");
+    } else {
+      document.documentElement.classList.remove("high-contrast");
+    }
+  };
+
+  const toggleReduceMotion = () => {
+    const newValue = !settings.reduceMotion;
+    setSettings({ ...settings, reduceMotion: newValue });
+    if (newValue) {
+      document.documentElement.classList.add("reduce-motion");
+    } else {
+      document.documentElement.classList.remove("reduce-motion");
+    }
+  };
 
   return (
     <div className={railCard}>
@@ -93,21 +169,21 @@ export function AccessibilityQuickToggles() {
       </h3>
       <div className="flex flex-wrap gap-2">
         <button
+          onClick={decreaseFontSize}
           className="px-3 py-1.5 rounded-lg border border-neutral-200 bg-white/70 text-xs font-medium hover:bg-brand-50 hover:border-brand-300 transition-colors"
           aria-label="Decrease font size"
         >
           A−
         </button>
         <button
+          onClick={increaseFontSize}
           className="px-3 py-1.5 rounded-lg border border-neutral-200 bg-white/70 text-xs font-medium hover:bg-brand-50 hover:border-brand-300 transition-colors"
           aria-label="Increase font size"
         >
           A+
         </button>
         <button
-          onClick={() =>
-            setSettings({ ...settings, highContrast: !settings.highContrast })
-          }
+          onClick={toggleHighContrast}
           className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
             settings.highContrast
               ? "border-brand-500 bg-brand-50 text-brand-700"
@@ -117,9 +193,7 @@ export function AccessibilityQuickToggles() {
           High contrast
         </button>
         <button
-          onClick={() =>
-            setSettings({ ...settings, reduceMotion: !settings.reduceMotion })
-          }
+          onClick={toggleReduceMotion}
           className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
             settings.reduceMotion
               ? "border-brand-500 bg-brand-50 text-brand-700"
@@ -135,9 +209,9 @@ export function AccessibilityQuickToggles() {
 
 export function KeyboardShortcutsCard() {
   const shortcuts = [
-    { key: "C", action: "Compose post" },
+    { key: "C", action: "Comment on post" },
     { key: "J / K", action: "Navigate feed" },
-    { key: "L", action: "Like post" },
+    { key: "L", action: "Like post (💚)" },
     { key: "?", action: "Show all shortcuts" },
   ];
 

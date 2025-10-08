@@ -140,3 +140,56 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Manual Reduce Motion Class */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --brand-50: #000000;
+  --brand-100: #FFFFFF;
+  --brand-200: #FFFFFF;
+  --brand-300: #FFFFFF;
+  --brand-400: #FFFFFF;
+  --brand-500: #FFFF00;
+  --brand-600: #FFFF00;
+  --brand-700: #FFFF00;
+  --brand-800: #FFFF00;
+
+  --ink-900: #000000;
+  --ink-700: #000000;
+  --ink-500: #000000;
+
+  --neutral-50: #FFFFFF;
+  --neutral-100: #FFFFFF;
+  --neutral-200: #000000;
+  --neutral-300: #000000;
+  --neutral-400: #000000;
+  --neutral-500: #000000;
+  --neutral-600: #000000;
+  --neutral-700: #000000;
+  --neutral-800: #000000;
+}
+
+.high-contrast body {
+  background: #FFFFFF;
+  color: #000000;
+}
+
+.high-contrast button,
+.high-contrast a,
+.high-contrast input,
+.high-contrast textarea {
+  border: 2px solid #000000 !important;
+}
+
+.high-contrast :focus-visible {
+  outline: 3px solid #FFFF00 !important;
+  outline-offset: 2px;
+}

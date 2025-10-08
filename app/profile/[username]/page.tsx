@@ -92,21 +92,39 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
             {/* Profile Image and Actions */}
             <div className="flex items-end justify-between -mt-16 mb-6">
               <div className="flex items-end gap-4">
-                {profileUser.image ? (
-                  <Image
-                    src={profileUser.image}
-                    alt={visibleData.displayName || username}
-                    width={128}
-                    height={128}
-                    className="rounded-full border-4 border-white shadow-lg"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-amber-200 flex items-center justify-center">
-                    <span className="text-4xl font-bold text-amber-700">
-                      {(visibleData.displayName || username).charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
+                <div className="relative">
+                  {profileUser.image ? (
+                    <Image
+                      src={profileUser.image}
+                      alt={visibleData.displayName || username}
+                      width={128}
+                      height={128}
+                      className="rounded-full border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-amber-200 flex items-center justify-center">
+                      <span className="text-4xl font-bold text-amber-700">
+                        {(visibleData.displayName || username).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Verified Professional Badge */}
+                  {profile.isVerified && (profile.profileType === "DOCTOR" || profile.profileType === "PT") && (
+                    <div
+                      className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 border-4 border-white shadow-lg"
+                      title={`Verified ${profile.profileType === "PT" ? "Physical Therapist" : "Healthcare Professional"}`}
+                    >
+                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {isOwnProfile ? (

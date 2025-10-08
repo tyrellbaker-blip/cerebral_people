@@ -8,6 +8,7 @@ type VisibilitySettings = {
   pronouns: VisibilityLevel;
   bio: VisibilityLevel;
   region: VisibilityLevel;
+  location: VisibilityLevel;
   cpSubtype: VisibilityLevel;
   gmfcs: VisibilityLevel;
   mobilityAids: VisibilityLevel;
@@ -26,6 +27,7 @@ export const DEFAULT_VIS: VisibilitySettings = {
   pronouns: "PUBLIC",
   bio: "PUBLIC",
   region: "FOLLOWERS",
+  location: "FOLLOWERS",
   cpSubtype: "FOLLOWERS",
   gmfcs: "FOLLOWERS",
   mobilityAids: "FOLLOWERS",

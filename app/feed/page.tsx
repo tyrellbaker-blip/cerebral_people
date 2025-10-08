@@ -37,6 +37,8 @@ export default async function FeedPage() {
           profile: {
             select: {
               displayName: true,
+              isVerified: true,
+              profileType: true,
             },
           },
         },
@@ -63,6 +65,8 @@ export default async function FeedPage() {
               profile: {
                 select: {
                   displayName: true,
+                  isVerified: true,
+                  profileType: true,
                 },
               },
             },
@@ -84,18 +88,18 @@ export default async function FeedPage() {
 
   return (
     <main className="min-h-screen">
-      <div className="mx-auto max-w-screen-2xl px-6 lg:px-12 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Feed column - anchored left, readable width */}
+      <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-12 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          {/* Feed column */}
           <section className="lg:col-span-7 xl:col-span-8">
             <div className="max-w-3xl">
               <FeedClient posts={posts} currentUserId={session.user!.id!} />
             </div>
           </section>
 
-          {/* Right rail - appears at lg breakpoint */}
-          <aside className="hidden lg:block lg:col-span-5 xl:col-span-4">
-            <div className="sticky top-4 space-y-4">
+          {/* Right rail - visible on all screen sizes */}
+          <aside className="lg:col-span-5 xl:col-span-4">
+            <div className="space-y-4 lg:sticky lg:top-4">
               <CalmCornerCard />
               <EnergyFiltersCard />
               <PeopleToFollow />

@@ -16,6 +16,7 @@ const FIELDS = [
   "pronouns",
   "bio",
   "region",
+  "location",
   "cpSubtype",
   "gmfcs",
   "mobilityAids",
@@ -304,6 +305,14 @@ export default function ProfileEditForm({ profile, userId, currentImage, updateP
           Privacy Settings
         </h2>
         <p className="text-sm text-amber-700">Control who can see each field of your profile</p>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-xs text-blue-900">
+            <strong>About Location Privacy:</strong> Controls who can see your city, state, and zip code.
+            Regardless of this setting, your location is always used to suggest nearby people to follow.
+            Distance is shown as "Within X miles" to protect your exact location.
+          </p>
+        </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {FIELDS.map((field) => (

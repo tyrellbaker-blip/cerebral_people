@@ -7,6 +7,8 @@ import PostCard from "./PostCard";
 import FeedLayoutToggle, { LayoutMode } from "./FeedLayoutToggle";
 import VoiceControls from "./VoiceControls";
 import PacingMode from "./PacingMode";
+import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
+import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 import {
   glassCard,
   textareaBase,
@@ -25,7 +27,9 @@ export default function FeedClient({ posts, currentUserId }: FeedClientProps) {
   const [postBody, setPostBody] = useState("");
   const [pacingModeEnabled, setPacingModeEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedPostIndex, setFocusedPostIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const postsRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Load pacing mode preference from localStorage
   useEffect(() => {
@@ -34,6 +38,47 @@ export default function FeedClient({ posts, currentUserId }: FeedClientProps) {
       setPacingModeEnabled(saved === "true");
     }
   }, []);
+
+  // Keyboard shortcuts
+  const { showHelp, setShowHelp } = useKeyboardShortcuts({
+    onCompose: () => {
+      const focusedPost = postsRefs.current[focusedPostIndex];
+      if (focusedPost) {
+        // Try to open comments and activate comment input
+        const commentsSection = focusedPost.querySelector('[data-comments-section]');
+        const commentsToggle = commentsSection?.querySelector('[data-comments-toggle]') as HTMLButtonElement;
+        const addCommentButton = commentsSection?.querySelector('[data-add-comment-button]') as HTMLButtonElement;
+
+        // If comments are collapsed, expand them first
+        if (commentsToggle?.getAttribute('aria-expanded') === 'false') {
+          commentsToggle.click();
+          // Wait a bit for the UI to expand, then click add comment
+          setTimeout(() => {
+            const newAddCommentButton = commentsSection?.querySelector('[data-add-comment-button]') as HTMLButtonElement;
+            newAddCommentButton?.click();
+          }, 100);
+        } else if (addCommentButton) {
+          // Comments already expanded, just click add comment
+          addCommentButton.click();
+        }
+      }
+    },
+    onNavigateNext: () => {
+      const nextIndex = Math.min(focusedPostIndex + 1, posts.length - 1);
+      setFocusedPostIndex(nextIndex);
+      postsRefs.current[nextIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
+    onNavigatePrev: () => {
+      const prevIndex = Math.max(focusedPostIndex - 1, 0);
+      setFocusedPostIndex(prevIndex);
+      postsRefs.current[prevIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
+    onLike: () => {
+      const focusedPost = postsRefs.current[focusedPostIndex];
+      const likeButton = focusedPost?.querySelector('[data-reaction-button="primary"]') as HTMLButtonElement;
+      likeButton?.click();
+    },
+  });
 
   const spacingClass = layoutMode === "compact" ? "space-y-3" : "space-y-6";
   const composerPadding = layoutMode === "compact" ? "p-4" : "p-6";
@@ -231,10 +276,21 @@ export default function FeedClient({ posts, currentUserId }: FeedClientProps) {
 
       {/* Posts - Scroll Snap Container */}
       <section className={`${spacingClass} scroll-smooth`}>
-        {posts.map((p) => (
-          <PostCard key={p.id} post={p} currentUserId={currentUserId} />
+        {posts.map((p, index) => (
+          <div
+            key={p.id}
+            ref={(el) => (postsRefs.current[index] = el)}
+            className={`transition-all ${
+              focusedPostIndex === index ? "ring-2 ring-brand-500 rounded-2xl" : ""
+            }`}
+          >
+            <PostCard post={p} currentUserId={currentUserId} />
+          </div>
         ))}
       </section>
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }

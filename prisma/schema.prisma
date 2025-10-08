@@ -77,6 +77,26 @@ enum NotificationType {
   SYSTEM
 }
 
+enum UserRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum ProfileType {
+  NORMAL
+  DOCTOR
+  PT
+  PARENT
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  SHADOWBANNED
+  DELETED
+}
+
 // CP-specific enums
 enum CPSubtype {
   SPASTIC
@@ -151,11 +171,19 @@ model User {
   emailVerified DateTime?
   dateOfBirth   DateTime?
   name          String?    @db.Text
+  firstName     String?    @db.Text
+  lastName      String?    @db.Text
   image         String?    @db.Text
   passkeyEnrolled Boolean  @default(false)
   lastLoginAt   DateTime?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+
+  // Admin fields
+  role          UserRole   @default(MEMBER)
+  status        UserStatus @default(ACTIVE)
+  suspendedUntil DateTime?
+  suspensionReason String?  @db.Text
 
   profile       Profile?
   posts         Post[]
@@ -171,6 +199,7 @@ model User {
   moderationActions ModerationAction[] @relation("moderation_actions_actor")
   notifications Notification[]
   auditLogs     AuditLog[] @relation("audit_logs_actor")
+  verificationRequest VerificationRequest?
 
   // NextAuth adapter fields
   accounts      Account[]
@@ -226,7 +255,18 @@ model Profile {
   pronouns    String?  @db.Text
   bio         String?  @db.Text
   region      String?  @db.Text  // free-form city/region; keep optional for privacy
+  city        String   @default("") @db.Text
+  state       String   @default("") @db.Text
+  zip         String   @default("") @db.Text
+  latitude    Decimal? @db.Decimal(10, 8)
+  longitude   Decimal? @db.Decimal(11, 8)
   photos      String[] @default([]) @db.Text  // array of photo URLs
+
+  // Profile type and verification
+  profileType  ProfileType @default(NORMAL)
+  isVerified   Boolean     @default(false)
+  verifiedAt   DateTime?
+  credentials  String?     @db.Text // Encrypted storage for credential documents
 
   // CP-specific fields
   cpSubtype   CPSubtype?    @default(UNKNOWN)
@@ -282,6 +322,11 @@ model Post {
   // CP-specific enhancements
   postType    PostType       @default(GENERAL)
   energyLevel Int?           // 1-4 scale: 1=😴 low, 2=😐 medium-low, 3=🙂 medium-high, 4=💪 high
+
+  // Admin moderation fields
+  isPinned    Boolean        @default(false)
+  pinnedAt    DateTime?
+  pinnedBy    String?        @db.Text // Admin username who pinned it
 
   author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   tags        PostTag[]
@@ -488,6 +533,8 @@ model AuditLog {
   targetType  String   @db.Text
   targetId    String?  @db.Uuid
   detail      Json?
+  ipAddress   String?  @db.Text
+  userAgent   String?  @db.Text
 
   actor       User?    @relation("audit_logs_actor", fields: [actorId], references: [id], onDelete: SetNull)
 
@@ -495,5 +542,158 @@ model AuditLog {
 
   @@index([actorId])
   @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
   @@map("audit_logs")
+}
+
+// Admin-specific models
+
+model ContentFilter {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pattern     String   @db.Text
+  type        String   @db.Text // "keyword", "link", "regex"
+  action      String   @db.Text // "flag", "auto-remove", "shadowban"
+  isActive    Boolean  @default(true)
+  reason      String?  @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type, isActive])
+  @@map("content_filters")
+}
+
+model SystemAnnouncement {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String   @db.Text
+  message     String   @db.Text
+  type        String   @db.Text // "info", "warning", "maintenance"
+  targetRole  String?  @db.Text // null = all, "MEMBER", "MODERATOR", "ADMIN"
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, startsAt, endsAt])
+  @@map("system_announcements")
+}
+
+model FeatureFlag {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique @db.Text
+  isEnabled   Boolean  @default(false)
+  description String?  @db.Text
+  config      Json?    // Additional configuration
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("feature_flags")
+}
+
+model ModNote {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentType   String   @db.Text // "POST" or "COMMENT"
+  contentId     String   @db.Uuid
+  note          String   @db.Text
+  adminUsername String   @db.Text
+  adminName     String?  @db.Text
+
+  createdAt     DateTime @default(now())
+
+  @@index([contentType, contentId])
+  @@index([createdAt(sort: Desc)])
+  @@map("mod_notes")
+}
+
+model DataExportRequest {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @db.Uuid
+  status      String   @db.Text // "pending", "processing", "completed", "failed"
+  format      String   @db.Text // "json", "csv"
+  downloadUrl String?  @db.Text
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([userId, status])
+  @@map("data_export_requests")
+}
+
+model VerificationRequest {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @unique @db.Uuid
+  role             String    @db.Text // "MD", "DO", "PA", "PT"
+  npi              String?   @db.Text
+  licenseNumber    String    @db.Text
+  licenseState     String    @db.Text
+  evidenceFileUrl  String?   @db.Text
+  evidenceFileName String?   @db.Text
+  websiteUrl       String?   @db.Text
+  status           String    @default("PENDING") @db.Text // "PENDING", "APPROVED", "REJECTED", "MORE_INFO_NEEDED"
+  notes            String?   @db.Text // User's notes
+  adminNotes       String?   @db.Text // Admin's internal notes
+  source           Json?     // NPI lookup results and verification data
+  reviewedBy       String?   @db.Text // Admin username
+  reviewedAt       DateTime?
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([role])
+  @@map("verification_requests")
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Admin System (Separate from User Accounts)
+// ───────────────────────────────────────────────────────────────────────────────
+
+model Admin {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username  String   @unique @db.Text
+  password  String   @db.Text // bcrypt hashed
+  email     String   @unique @db.Text
+  name      String   @db.Text
+
+  isActive  Boolean  @default(true)
+  isSuperAdmin Boolean @default(false) // Super admins can create other admins
+
+  lastLoginAt DateTime?
+  lastLoginIp String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions AdminSession[]
+
+  @@index([username])
+  @@index([isActive])
+  @@map("admins")
+}
+
+model AdminSession {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId   String   @db.Uuid
+  token     String   @unique @db.Text
+  expiresAt DateTime
+  ipAddress String?  @db.Text
+  userAgent String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("admin_sessions")
 }

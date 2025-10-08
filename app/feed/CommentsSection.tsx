@@ -232,7 +232,7 @@ export default function CommentsSection({
   };
 
   return (
-    <div>
+    <div data-comments-section>
       {/* Comments header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -241,6 +241,7 @@ export default function CommentsSection({
         aria-label={`${isExpanded ? "Hide" : "Show"} ${commentCount} ${
           commentCount === 1 ? "comment" : "comments"
         }`}
+        data-comments-toggle
       >
 
         <svg
@@ -273,6 +274,7 @@ export default function CommentsSection({
               onClick={() => setIsCommenting(true)}
               className="text-sm text-brand-600 hover:text-brand-700 font-medium mb-4 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors motion-reduce:transition-none"
               aria-label="Add a comment"
+              data-add-comment-button
             >
               + Add a comment
             </button>

@@ -1,11 +1,13 @@
 import CredentialsSignInForm from "./CredentialsSignInForm";
 import { signInWithCredentials } from "./actions";
 
-export default function SignInPage({
+export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: { registered?: string };
+  searchParams: Promise<{ registered?: string }>;
 }) {
+  const params = await searchParams;
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -17,7 +19,7 @@ export default function SignInPage({
             Sign in to connect with the community
           </p>
 
-          {searchParams.registered === "true" && (
+          {params.registered === "true" && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800">
               Account created successfully! You can now sign in.
             </div>

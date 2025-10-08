@@ -47,8 +47,8 @@ export default function ReactionButtons({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {Object.entries(reactionConfig).map(([kind, config]) => {
+    <div className="flex items-center gap-2 flex-wrap" data-reactions>
+      {Object.entries(reactionConfig).map(([kind, config], index) => {
         const count = reactionCounts[kind] || 0;
         const isActive = userReaction?.kind === kind;
 
@@ -57,6 +57,7 @@ export default function ReactionButtons({
             key={kind}
             onClick={() => handleReaction(kind as any)}
             disabled={isPending}
+            data-reaction-button={index === 0 ? "primary" : undefined}
             className={`
               flex items-center gap-1 px-3 py-1.5 rounded-full text-sm
               border-2 transition-all
