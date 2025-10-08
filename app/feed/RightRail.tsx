@@ -92,26 +92,26 @@ export function PeopleToFollow() {
               {user.image ? (
                 <img
                   src={user.image}
-                  alt={user.displayName || user.username}
+                  alt={user.displayName || user.username || "User"}
                   className="size-8 rounded-full flex-shrink-0 border border-brand-200/50"
                 />
               ) : (
                 <div className="size-8 rounded-full bg-brand-100 flex-shrink-0 border border-brand-200/50 flex items-center justify-center">
                   <span className="text-xs font-bold text-brand-700">
-                    {(user.displayName || user.username).charAt(0).toUpperCase()}
+                    {(user.displayName || user.username || "?").charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
               <div className="text-xs min-w-0">
                 <div className="font-medium text-ink-900 truncate">
-                  {user.displayName || user.username}
+                  {user.displayName || user.username || "Anonymous"}
                 </div>
                 <div className="text-ink-500/80 truncate">{user.distance}</div>
               </div>
             </div>
             <button
-              onClick={() => handleFollow(user.username)}
-              disabled={isPending}
+              onClick={() => user.username && handleFollow(user.username)}
+              disabled={isPending || !user.username}
               className="px-2.5 py-1 rounded-lg border border-brand-500/30 bg-white/70 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors flex-shrink-0 disabled:opacity-50"
             >
               Follow

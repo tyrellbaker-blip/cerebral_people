@@ -11,9 +11,6 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  // Allow linking Google accounts to existing accounts with same email
-  // This is safe because we trust Google's email verification
-  allowDangerousEmailAccountLinking: true,
   providers: [
     CredentialsProvider({
       name: "credentials",

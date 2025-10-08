@@ -184,13 +184,16 @@ export async function approveVerification(requestId: string, adminNotes?: string
 
   // Update user profile to mark as verified
   if (request.user.profile) {
+    // Map verification role to ProfileType
+    const profileType = request.role === "PT" ? "PT" : "DOCTOR";
+
     await prisma.profile.update({
       where: { id: request.user.profile.id },
       data: {
         isVerified: true,
         verifiedAt: new Date(),
         // Update profileType to match the verification role if needed
-        profileType: request.role,
+        profileType: profileType as any,
       },
     });
   }

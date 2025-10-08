@@ -279,7 +279,7 @@ export default function FeedClient({ posts, currentUserId }: FeedClientProps) {
         {posts.map((p, index) => (
           <div
             key={p.id}
-            ref={(el) => (postsRefs.current[index] = el)}
+            ref={(el) => { postsRefs.current[index] = el; }}
             className={`transition-all ${
               focusedPostIndex === index ? "ring-2 ring-brand-500 rounded-2xl" : ""
             }`}

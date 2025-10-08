@@ -198,7 +198,8 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
                   className="w-4 h-4 text-blue-500"
                   fill="currentColor"
                   viewBox="0 0 20 20"
-                  title={`Verified ${post.author?.profile?.profileType === "PT" ? "Physical Therapist" : "Healthcare Professional"}`}
+                  aria-label={`Verified ${post.author?.profile?.profileType === "PT" ? "Physical Therapist" : "Healthcare Professional"}`}
+                  role="img"
                 >
                   <path
                     fillRule="evenodd"

@@ -18,7 +18,14 @@ async function seedUsers() {
 
   // Create 30 test users with varied data
   const userCount = 30;
-  const createdUsers = [];
+  const createdUsers: Array<{
+    id: string;
+    username: string | null;
+    email: string | null;
+    role: UserRole;
+    status: UserStatus;
+    profileType: ProfileType;
+  }> = [];
 
   for (let i = 0; i < userCount; i++) {
     const status = faker.helpers.arrayElement(STATUSES);

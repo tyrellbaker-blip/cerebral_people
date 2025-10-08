@@ -24,7 +24,7 @@ interface VerificationRequest {
     id: string;
     username: string | null;
     name: string | null;
-    email: string;
+    email: string | null;
     createdAt: Date;
     profile: {
       bio: string | null;
@@ -133,7 +133,7 @@ export default function PendingVerificationQueue({
                     {request.user.name || "Not provided"}
                   </div>
                   <div className="text-sm text-ink-700">
-                    <span className="font-medium">Email:</span> {request.user.email}
+                    <span className="font-medium">Email:</span> {request.user.email || "Not provided"}
                   </div>
                   <div className="text-sm text-ink-500">
                     <span className="font-medium">Account created:</span>{" "}

@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 
+interface ScoredResult {
+  provider: any;
+  score: number;
+  reasons: string[];
+}
+
 /**
  * NPI Registry API lookup
  * Uses the free NPPES National Provider Identifier Registry
@@ -115,7 +121,7 @@ export async function POST(req: Request) {
     });
 
     // Sort by score
-    scoredResults.sort((a, b) => b.score - a.score);
+    scoredResults.sort((a: ScoredResult, b: ScoredResult) => b.score - a.score);
 
     const best = scoredResults[0];
 
@@ -125,7 +131,7 @@ export async function POST(req: Request) {
         {
           match: false,
           reason: "NPI found but details didn't match well enough",
-          results: scoredResults.slice(0, 3).map(r => ({
+          results: scoredResults.slice(0, 3).map((r: ScoredResult) => ({
             npi: r.provider.number,
             name: `${r.provider.basic?.first_name || ""} ${r.provider.basic?.last_name || ""}`,
             score: r.score,

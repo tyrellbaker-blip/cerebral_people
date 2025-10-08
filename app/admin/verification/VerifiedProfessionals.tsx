@@ -6,22 +6,28 @@ import Link from "next/link";
 import { removeVerifiedBadge } from "./actions";
 import AdminBadge from "../components/AdminBadge";
 
-interface VerifiedUser {
+interface VerifiedRequest {
   id: string;
-  username: string | null;
-  name: string | null;
-  email: string;
-  profile: {
+  role: string;
+  status: string;
+  reviewedBy: string | null;
+  reviewedAt: Date | null;
+  user: {
     id: string;
-    profileType: string;
-    bio: string | null;
-    isVerified: boolean;
-    verifiedAt: Date | null;
-  } | null;
+    username: string | null;
+    name: string | null;
+    email: string | null;
+    profile: {
+      bio: string | null;
+      profileType: string;
+      isVerified: boolean;
+      verifiedAt: Date | null;
+    } | null;
+  };
 }
 
 interface VerifiedProfessionalsProps {
-  users: VerifiedUser[];
+  users: VerifiedRequest[];
 }
 
 export default function VerifiedProfessionals({
@@ -58,9 +64,9 @@ export default function VerifiedProfessionals({
   return (
     <div className="space-y-4">
       {users.length > 0 ? (
-        users.map((user) => (
+        users.map((request) => (
           <div
-            key={user.id}
+            key={request.id}
             className="bg-white rounded-lg border border-neutral-200 p-6"
           >
             <div className="flex items-start justify-between">
@@ -68,17 +74,17 @@ export default function VerifiedProfessionals({
                 {/* User Header */}
                 <div className="flex items-center gap-3 mb-3">
                   <Link
-                    href={`/admin/users/${user.id}`}
+                    href={`/admin/users/${request.user.id}`}
                     className="text-lg font-semibold text-brand-600 hover:text-brand-700"
                   >
-                    @{user.username || "no-username"}
+                    @{request.user.username || "no-username"}
                   </Link>
-                  {user.profile && (
+                  {request.user.profile && (
                     <>
                       <AdminBadge variant="info">
-                        {user.profile.profileType}
+                        {request.user.profile.profileType}
                       </AdminBadge>
-                      {user.profile.isVerified && (
+                      {request.user.profile.isVerified && (
                         <AdminBadge variant="success">
                           ✓ VERIFIED
                         </AdminBadge>
@@ -90,27 +96,27 @@ export default function VerifiedProfessionals({
                 {/* User Info */}
                 <div className="space-y-2 mb-4">
                   <div className="text-sm text-ink-700">
-                    <span className="font-medium">Name:</span> {user.name || "Not provided"}
+                    <span className="font-medium">Name:</span> {request.user.name || "Not provided"}
                   </div>
                   <div className="text-sm text-ink-700">
-                    <span className="font-medium">Email:</span> {user.email}
+                    <span className="font-medium">Email:</span> {request.user.email || "Not provided"}
                   </div>
-                  {user.profile?.verifiedAt && (
+                  {request.user.profile?.verifiedAt && (
                     <div className="text-sm text-green-600">
                       <span className="font-medium">Verified on:</span>{" "}
-                      {new Date(user.profile.verifiedAt).toLocaleDateString()}
+                      {new Date(request.user.profile.verifiedAt).toLocaleDateString()}
                     </div>
                   )}
                 </div>
 
                 {/* Bio */}
-                {user.profile?.bio && (
+                {request.user.profile?.bio && (
                   <div className="mb-4">
                     <div className="text-sm font-medium text-ink-700 mb-1">
                       Bio:
                     </div>
                     <div className="text-sm text-ink-600 bg-neutral-50 p-3 rounded border border-neutral-200">
-                      {user.profile.bio}
+                      {request.user.profile.bio}
                     </div>
                   </div>
                 )}
@@ -120,17 +126,17 @@ export default function VerifiedProfessionals({
               <div className="ml-6 flex flex-col gap-2">
                 <button
                   onClick={() =>
-                    handleRemoveBadge(user.id, user.username || "no-username")
+                    handleRemoveBadge(request.user.id, request.user.username || "no-username")
                   }
-                  disabled={isPending && actioningId === user.id}
+                  disabled={isPending && actioningId === request.user.id}
                   className="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPending && actioningId === user.id
+                  {isPending && actioningId === request.user.id
                     ? "Removing..."
                     : "Remove Badge"}
                 </button>
                 <Link
-                  href={`/admin/users/${user.id}`}
+                  href={`/admin/users/${request.user.id}`}
                   className="px-4 py-2 border border-neutral-300 text-ink-700 text-sm font-medium rounded-lg hover:bg-neutral-50 text-center"
                 >
                   View Profile
