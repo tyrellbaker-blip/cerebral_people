@@ -22,6 +22,11 @@ export async function signInWithCredentials(formData: FormData) {
       redirectTo: "/feed",
     });
   } catch (error) {
+    // Re-throw redirect errors (they indicate success)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error;
+    }
+    // All other errors are authentication failures
     throw new Error("Invalid credentials");
   }
 }
