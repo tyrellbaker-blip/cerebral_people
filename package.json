@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
+    "postinstall": "prisma generate",
     "seed:test-users": "npx tsx scripts/seed-test-users.ts",
     "seed:test-users:keep": "npx tsx scripts/seed-test-users.ts --keep",
     "seed:clear-test-users": "npx tsx scripts/seed-test-users.ts --clear"
