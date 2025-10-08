@@ -90,6 +90,11 @@ export async function signUpAction(formData: FormData) {
     // Redirect to sign in page
     redirect("/signin?registered=true");
   } catch (error) {
+    // Re-throw redirect errors (they're not actual errors)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error;
+    }
+
     console.error("Signup error:", error);
     return {
       success: false,
